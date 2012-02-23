@@ -2,8 +2,6 @@
 
 Finding cheapest operator and its prices. A experimental gem.
 
-
-
 ~~~
   require 'Ala'
   include Ala
@@ -22,6 +20,7 @@ Finding cheapest operator and its prices. A experimental gem.
 ##Running Unit Tests
 
 cd into the project folder
+
 ~~~
  rake test
 ~~~
