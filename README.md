@@ -1,4 +1,4 @@
-#Programming Exercise
+##Programming Exercise
 
 Finding cheapest operator and its prices. A experimental gem.
 
@@ -19,8 +19,9 @@ Finding cheapest operator and its prices. A experimental gem.
 
 ~~~
 
-Running Unit Tests
+##Running Unit Tests
 
+cd into the project folder
 ~~~
  rake test
 ~~~
