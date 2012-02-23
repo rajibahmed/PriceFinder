@@ -11,14 +11,26 @@ module Ala
       @route = router
     end
 
-    def phone=(number)
-      @phone=PhoneNumber.clean(number)
+    def find_cheapest(number=nil)
+      phone= number || phone
+      route.find_cheapest(phone)
     end
 
+    def price
+      route.price || "N/A"
+    end
+
+    def carrier
+      route.carrier || "N/A"
+    end
   end
 
 
+  # This is dataloader for router
+  # Gives an interface to load data
+  # Can be replaced with FileRead API-endpoints
   class Loader
+
 
     def initialize
       @linesA = [
@@ -74,8 +86,6 @@ module Ala
     def read(lines,operator)
       lines.each do |line|
         prefix, price = line
-        @country_codes << prefix
-        @operators << operator unless @operators.include?(operator)
         add(prefix,operator,price)
       end
     end
@@ -87,12 +97,14 @@ module Ala
       else
         @list[prefix] = {operator.to_sym => price }
       end
+      @country_codes << prefix unless @country_codes.include?(prefix)
+      @operators << operator unless @operators.include?(operator)
     end
 
 
 
     def country_prefix_for(phone_number)
-      prefix_list = @list.keys.map do |prefix|
+      prefix_list = @country_codes.map do |prefix|
         Regexp.new("^#{prefix}").match(phone_number).to_s
       end
       prefix_list.compact.reject(&:empty?)
@@ -103,17 +115,31 @@ module Ala
 
     #@returns Array[ Symbol operator , String price ]
     def find_cheapest(phone_number)
+      phone_number = PhoneNumber.clean(phone_number)
+      return reset unless PhoneNumber.valid?(phone_number,self)
       @matched_country_codes = country_prefix_for(phone_number)
       @matched_country_codes.sort!{|x,y| y<=>x}
+      @matched_country_codes
       @max_matched_country_code = @matched_country_codes.shift
+      @matched_country_codes
       find
     end
 
+
+
     private #====================================================
+
+    def reset
+      @carrier = nil
+      @price = nil
+      [@carrier , @price]
+    end
 
     def find
       data = {}
+
       data.merge!(@list[@max_matched_country_code])
+
       for operator in rest_operators
         for prefix in @matched_country_codes
           unless @list[prefix][operator].nil?
@@ -122,10 +148,10 @@ module Ala
           end
         end
       end
-      min_price = data.values.min
 
+      min_price = data.values.map(&:to_f).min
       @carrier, @price = data.select do |k,v|
-        v == min_price
+        v.to_f == min_price
       end.flatten
     end
 
@@ -133,6 +159,7 @@ module Ala
     def rest_operators
       @operators - @list[@max_matched_country_code].keys
     end
+
   end
 
 
@@ -143,22 +170,11 @@ module Ala
       number.gsub(/[^0-9]/,"").gsub(/^0{1,2}/,"")
     end
 
-    def self.valid?(number)
-      number = clean(number)
-      status = false
-      status = true unless Router.instance.country_prefix_for(number).empty?
-      status
+    def self.valid?(number,router)
+      !router.country_prefix_for(number).empty?
     end
   end
 
 end
 
-data_loader = Ala::Loader.new
-router = Ala::Router.instance
-router.read(data_loader.first_operator, :A)
-router.read(data_loader.second_operator, :B)
 
-
-app = Ala::App.new(Ala::Router.instance)
-app.route.find_cheapest("46732090099")
-puts Ala::PhoneNumber.valid? "++00004611111"
