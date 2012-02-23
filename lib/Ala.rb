@@ -4,7 +4,8 @@ require 'singleton'
 module Ala
 
   class App
-    attr_accessor :route,:phone
+    attr_accessor :phone
+    attr_reader :route
 
     def initialize(router)
       @phone=""

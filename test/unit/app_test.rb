@@ -19,4 +19,16 @@ class TestApp < Test::Unit::TestCase
     assert_not_equal ":A",    @app.carrier
   end
 
+  def test_for_phone_number
+    @app.phone = "+ 46 232111"
+    assert_equal "+ 46 232111", @app.phone
+    assert_respond_to @app, :phone
+    assert_respond_to @app, :phone=
+  end
+
+  def test_router_is_set
+    assert_equal @app.route, Ala::Router.instance
+    assert_respond_to @app, :route
+  end
+
 end
